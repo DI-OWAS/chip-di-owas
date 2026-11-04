@@ -684,12 +684,7 @@ module diowas_top (
   assign efpga_usr_irq_o = 4'b0;
   assign efpga_fault_irq_o = 1'b0;
 `else
-  efpga_subsystem_top #(
-`ifdef __ICARUS__ // TODO: Question from UH1: why are these parameters only set for the iverilog flow (We did not do/intend that)?
-    .AXI_ID_WIDTH (8),
-    .HW_VERSION   (32'hFAB00001)
-`endif
-  ) efpga_subsystem_top_inst (
+  efpga_subsystem_top efpga_subsystem_top_inst (
     // Global Clock & Synchronized System Resets
     .clk_i               (clk_i),
     .rst_efpga_connector_n_i ( system_resetn[RESET_EFPGA_CON0]), // Active-Low Reset for eFPGA AXI Connector (Manager, Decouplers, Watchdogs, Bridges)

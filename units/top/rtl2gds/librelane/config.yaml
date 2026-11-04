@@ -638,21 +638,21 @@ MACROS:
 
   efpga_subsystem_top:
     gds:
-      - dir::../../../../vendor/MLFPGA_engine/final/gds/efpga_subsystem_top.gds
+      - dir::../../../../vendor/efpga_subsystem/MACROS/efpga_subsystem_top/views/gds/efpga_subsystem_top.gds.gz
     lef:
-      - dir::../../../../vendor/MLFPGA_engine/final/lef/efpga_subsystem_top.lef
+      - dir::../../../../vendor/efpga_subsystem/MACROS/efpga_subsystem_top/views/lef/efpga_subsystem_top.lef
     nl:
-      - dir::../../../../vendor/MLFPGA_engine/final/vh/efpga_subsystem_top.vh
-    #spef:
-    #  "nom_*":
-    #    - dir::../../../../vendor/MLFPGA_engine/final/spef/nom/efpga_subsystem_top.nom.spef
+      - dir::../../../../vendor/efpga_subsystem/MACROS/efpga_subsystem_top/views/vh/efpga_subsystem_top.vh
+    spef:
+      "nom_*":
+        - dir::../../../../vendor/efpga_subsystem/MACROS/efpga_subsystem_top/views/spef/nom/efpga_subsystem_top.nom.spef.gz
     lib:
       "nom_typ_1p20V_25C":
-        - dir::../../../../vendor/MLFPGA_engine/final/lib/nom_typ_1p20V_25C/efpga_subsystem_top__nom_typ_1p20V_25C.lib
+        - dir::../../../../vendor/efpga_subsystem/MACROS/efpga_subsystem_top/views/lib/nom_typ_1p20V_25C/efpga_subsystem_top__nom_typ_1p20V_25C.lib
       "nom_fast_1p32V_m40C":
-        - dir::../../../../vendor/MLFPGA_engine/final/lib/nom_fast_1p32V_m40C/efpga_subsystem_top__nom_fast_1p32V_m40C.lib
+        - dir::../../../../vendor/efpga_subsystem/MACROS/efpga_subsystem_top/views/lib/nom_fast_1p32V_m40C/efpga_subsystem_top__nom_fast_1p32V_m40C.lib
       "nom_slow_1p08V_125C":
-        - dir::../../../../vendor/MLFPGA_engine/final/lib/nom_slow_1p08V_125C/efpga_subsystem_top__nom_slow_1p08V_125C.lib
+        - dir::../../../../vendor/efpga_subsystem/MACROS/efpga_subsystem_top/views/lib/nom_slow_1p08V_125C/efpga_subsystem_top__nom_slow_1p08V_125C.lib
     instances: 
       diowas_top_i/efpga_subsystem_top_inst:
         location: [1610.84, 2365.68]

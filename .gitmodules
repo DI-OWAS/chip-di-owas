@@ -14,9 +14,6 @@
 	path = vendor/IHP-Open-PDK
 	url = https://github.com/IHP-GmbH/IHP-Open-PDK.git
 	ignore = dirty
-[submodule "vendor/MLFPGA_engine"]
-	path = vendor/MLFPGA_engine
-	url = https://github.com/Asma-Mohsin/MLFPGA_engine.git
 [submodule "vendor/QSPI_Memory_Controller"]
 	path = vendor/QSPI_Memory_Controller
 	url = https://github.com/IAmMarcelJung/NSPI_Memory_Controller.git
@@ -25,3 +22,7 @@
 	path = vendor/tulip
 	url = https://github.com/di-owas/tulip
 	ignore = dirty
+[submodule "vendor/efpga_subsystem"]
+	path = vendor/efpga_subsystem
+	url = https://github.com/DI-OWAS/OWAS_eFPGA_Subsystem.git
+	branch = main
