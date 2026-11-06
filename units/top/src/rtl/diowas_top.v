@@ -1153,7 +1153,13 @@ module diowas_top (
     .STRB_WIDTH (4),
     .ID_WIDTH   (8),
     .CHIP_TYPE  (2), // must be 2 (APMemory APS12808L)
-    .CLK_FREQ_HZ(50_000_000) // clk_i, the PSRAM reset / tCEM timings are derived from it
+    .CLK_FREQ_HZ(50_000_000), // clk_i, the PSRAM reset / tCEM timings are derived from it
+`ifdef OCTRAM_RESET_CYCLES
+    // simulation only (RTL and separately synthesized gate-level sim netlists): shorter RESET# low time
+    .MEMORY_RESET_CYCLES(`OCTRAM_RESET_CYCLES)
+`else
+    .MEMORY_RESET_CYCLES((50_000_000 + 49) / 50) // actual RESET# low time of the memories (20 ms)
+`endif
   ) OctalMemoryController_quad_inst (
     .clk   (clk_i),
     .rstn  (system_resetn[RESET_OCTRAM]),
