@@ -10,6 +10,7 @@
 #   BOOT_IMAGE=<file>     SPI flash image (default: octram_test)
 #   STOP_AFTER_DMA=1      end after the JTAG tests
 #   WAVEDUMP=1            write a VCD
+#   CMOS5L_PDK=<dir>      SG13CMOS5L PDK (default: PDK_ROOT, else the ciel install)
 #   OCTRAM_RESET_CYCLES   PSRAM RESET# low time in clocks (default 500, chip 20 ms).
 #                         For gl_pads it is set at synthesis of the sim netlist, never for the chip.
 #
@@ -28,16 +29,18 @@ FW_IMAGE   := ../firmware/octram_test/octram_boot_image.mem
 BOOT_IMAGE ?= $(FW_IMAGE)
 GL_NETLIST ?=
 
-IVERILOG_FLAGS = -g2012 -s diowas_top_tb -I $(INC_SIM) \
+IVERILOG_FLAGS = -g2012 -s diowas_top_tb -I $(INC_SIM) -DIHP_CMOS5L \
   -DOCTRAM_RESET_CYCLES=$(OCTRAM_RESET_CYCLES) '-DBOOT_IMAGE="$(BOOT_IMAGE)"' \
   $(if $(STOP_AFTER_DMA),-DTB_STOP_AFTER_DMA) $(if $(WAVEDUMP),-DWAVEDUMP)
 
 # --- simulation-only sources ---
+CMOS5L_PDK   ?= $(firstword $(wildcard $(PDK_ROOT)/ihp-sg13cmos5l $(HOME)/.ciel/ihp-sg13/ihp-sg13cmos5l))
+$(if $(wildcard $(CMOS5L_PDK)/libs.ref),,$(error SG13CMOS5L PDK not found (CMOS5L_PDK=$(CMOS5L_PDK)), set CMOS5L_PDK to the ihp-sg13cmos5l directory))
 MODEL_PSRAM  := ../../vendor/QSPI_Memory_Controller/test/sim_models/aps12808l_model.v
-MODELS_SRAM  := $(PDK_ROOT)/ihp-sg13g2/libs.ref/sg13g2_sram/verilog/*.v
-MODELS_IO    := $(PDK_ROOT)/ihp-sg13g2/libs.ref/sg13g2_io/verilog/*.v
-MODELS_CELLS := $(PDK_ROOT)/ihp-sg13g2/libs.ref/sg13g2_stdcell/verilog/sg13g2_udp.v \
-                $(PDK_ROOT)/ihp-sg13g2/libs.ref/sg13g2_stdcell/verilog/sg13g2_stdcell.v
+MODELS_SRAM  := $(CMOS5L_PDK)/libs.ref/sg13cmos5l_sram/verilog/*.v
+MODELS_IO    := $(CMOS5L_PDK)/libs.ref/sg13cmos5l_io/verilog/*.v
+CELLS_SIM    := $(CMOS5L_PDK)/libs.ref/sg13cmos5l_stdcell/verilog/sg13cmos5l_stdcell.v
+MODELS_CELLS := $(CMOS5L_PDK)/libs.ref/sg13cmos5l_stdcell/verilog/sg13cmos5l_udp.v $(CELLS_SIM)
 STUB_EFPGA   := src/sim/efpga_subsystem_stub.sv
 
 # verilog-axi needs the Verilog-2005 time-0 run of "always @*". With -g2012 the
@@ -76,7 +79,7 @@ rtl_core: vhdl_to_verilog $(RTL_AXI_SIM) $(BOOT_IMAGE)
 rtl_pads: vhdl_to_verilog $(RTL_AXI_SIM) $(BOOT_IMAGE)
 	$(call octram_run,rtl_pads,$(FILES_RTL_PADS))
 
-gl_pads: $(BOOT_IMAGE)
+gl_pads: $(BOOT_IMAGE) $(CELLS_SIM)
 	@test -n "$(GL_NETLIST)" || (echo "set GL_NETLIST=<gate-level netlist of diowas_top_pads>"; exit 1)
 	$(call octram_run,gl_pads,$(FILES_GL_PADS),-DGATE_LEVEL -DFUNCTIONAL)
 
