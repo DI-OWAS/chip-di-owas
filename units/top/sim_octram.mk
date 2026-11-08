@@ -11,6 +11,7 @@
 #   STOP_AFTER_DMA=1      end after the JTAG tests
 #   WAVEDUMP=1            write a VCD
 #   CMOS5L_PDK=<dir>      SG13CMOS5L PDK (default: PDK_ROOT, else the ciel install)
+#   DCV=1                 also run the DC-Vision test of the TB (20 ms simulated wait)
 #   OCTRAM_RESET_CYCLES   PSRAM RESET# low time in clocks (default 500, chip 20 ms).
 #                         For gl_pads it is set at synthesis of the sim netlist, never for the chip.
 #
@@ -28,10 +29,12 @@ OCTRAM_RESET_CYCLES ?= 500
 FW_IMAGE   := ../firmware/octram_test/octram_boot_image.mem
 BOOT_IMAGE ?= $(FW_IMAGE)
 GL_NETLIST ?=
+DCV        ?= 0
 
 IVERILOG_FLAGS = -g2012 -s diowas_top_tb -I $(INC_SIM) -DIHP_CMOS5L \
   -DOCTRAM_RESET_CYCLES=$(OCTRAM_RESET_CYCLES) '-DBOOT_IMAGE="$(BOOT_IMAGE)"' \
-  $(if $(STOP_AFTER_DMA),-DTB_STOP_AFTER_DMA) $(if $(WAVEDUMP),-DWAVEDUMP)
+  $(if $(STOP_AFTER_DMA),-DTB_STOP_AFTER_DMA) $(if $(WAVEDUMP),-DWAVEDUMP) \
+  $(if $(filter 1,$(DCV)),,-DTB_SKIP_DCV)
 
 # --- simulation-only sources ---
 CMOS5L_PDK   ?= $(firstword $(wildcard $(PDK_ROOT)/ihp-sg13cmos5l $(HOME)/.ciel/ihp-sg13/ihp-sg13cmos5l))
