@@ -189,11 +189,6 @@ module diowas_top_tb;
   // SPI flash
   // *************************************************************************************
 
-  assign clk_wire = clk;
-  assign rstn_wire = rstn;
-  assign logic0 = 1'b0;
-  assign ts = 1'bz;
-
   spi_rom #(
     .INIT_FILE   ("src/sim/boot_image.mem"),
     .SIZE_BYTES  (16*1024),
