@@ -4,6 +4,9 @@
 #   rtl_core  RTL of diowas_top (TECH_FPGA path)
 #   rtl_pads  RTL with the pad ring (diowas_top_pads)
 #   gl_pads   netlist of diowas_top_pads (GL_NETLIST)
+#   gl_inst   rtl_pads with the GL_INST instances as yosys netlists (default: the
+#             AXI interconnect), see sim_gl_inst.py. RUN=<name> names the log.
+#             Build the netlists first (make -j gl_netlists) before parallel runs.
 #
 # Options:
 #   GL_NETLIST=<file>     gl_pads: gate-level netlist of diowas_top_pads
@@ -61,7 +64,7 @@ FILES_RTL_PADS := $(FILES_SIM) $(MODEL_PSRAM) $(RTL_SIM) $(RTL_TOP_ASIC) $(MODEL
 FILES_GL_PADS  := $(FILES_SIM) $(MODEL_PSRAM) $(GL_NETLIST) $(STUB_EFPGA) $(MODELS_CELLS) $(MODELS_IO) $(MODELS_SRAM)
 
 # --- targets ---
-.PHONY: help_octram rtl_core rtl_pads gl_pads fw_image clean_octram
+.PHONY: help_octram rtl_core rtl_pads gl_pads gl_inst gl_netlists fw_image clean_octram axi_patch_check
 
 fw_image $(FW_IMAGE):
 	$(MAKE) -C ../firmware/octram_test sim_image
@@ -85,6 +88,39 @@ rtl_pads: vhdl_to_verilog $(RTL_AXI_SIM) $(BOOT_IMAGE)
 gl_pads: $(BOOT_IMAGE) $(CELLS_SIM)
 	@test -n "$(GL_NETLIST)" || (echo "set GL_NETLIST=<gate-level netlist of diowas_top_pads>"; exit 1)
 	$(call octram_run,gl_pads,$(FILES_GL_PADS),-DGATE_LEVEL -DFUNCTIONAL)
+
+# --- any diowas_top instance at gate level, see sim_gl_inst.py ---
+GL_AXI_INST := axi_crossbar_inst axil_interconnect_inst axi_lite_bridge axi_lite_bridge_spiram
+GL_INST ?= $(GL_AXI_INST)
+RUN     ?= gl_inst
+GL_INST_DIR := build/gl_inst
+GL_INST_TOP := $(BUILD)/$(RUN)_diowas_top.v
+GL_INST_NETLISTS := $(foreach i,$(GL_INST),$(GL_INST_DIR)/$(i)_gl.v)
+# RTL that sim_gl_inst.py elaborates (the eFPGA is a black box there)
+GL_INST_RTL := $(wildcard $(filter-out $(RTL_EFPGA),$(FILES_RTL)))
+
+# The netlists use vendor/verilog-axi directly (git status hides its changes).
+# Without verilog-axi.patch the first CPU write hangs (no reset on w_drop_reg).
+axi_patch_check:
+	@git -C ../../vendor/verilog-axi apply --check -R $(CURDIR)/verilog-axi.patch 2>/dev/null || \
+	  (echo "verilog-axi.patch is not applied to vendor/verilog-axi: run make -C units/top patch"; exit 1)
+
+$(GL_INST_DIR)/%_gl.v: sim_gl_inst.py $(GL_INST_RTL) | axi_patch_check
+	CMOS5L_PDK=$(CMOS5L_PDK) OCTRAM_RESET_CYCLES=$(OCTRAM_RESET_CYCLES) GL_INST_RTL="$(GL_INST_RTL)" ./sim_gl_inst.py synth $*
+
+gl_netlists: $(GL_INST_NETLISTS)
+
+# always rewritten: GL_INST can change without RTL_TOP changing
+$(GL_INST_TOP): sim_gl_inst.py $(RTL_TOP) FORCE
+	./sim_gl_inst.py top $@ $(GL_INST)
+
+FORCE:
+
+FILES_GL_INST := $(FILES_SIM) $(MODEL_PSRAM) $(GL_INST_TOP) $(filter-out $(RTL_TOP),$(RTL_SIM)) $(GL_INST_NETLISTS) \
+  $(MODELS_CELLS) $(RTL_TOP_ASIC) $(MODELS_IO) $(MODELS_SRAM)
+
+gl_inst: vhdl_to_verilog $(RTL_AXI_SIM) $(BOOT_IMAGE) $(CELLS_SIM) $(GL_INST_NETLISTS) $(GL_INST_TOP)
+	$(call octram_run,$(RUN),$(FILES_GL_INST),-DFUNCTIONAL $(foreach i,$(GL_INST),-DGL_$(i)))
 
 clean_octram:
 	rm -rf $(BUILD)
