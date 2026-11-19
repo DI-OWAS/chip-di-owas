@@ -49,6 +49,11 @@ CELLS_SIM    := $(CMOS5L_PDK)/libs.ref/sg13cmos5l_stdcell/verilog/sg13cmos5l_std
 MODELS_CELLS := $(CMOS5L_PDK)/libs.ref/sg13cmos5l_stdcell/verilog/sg13cmos5l_udp.v $(CELLS_SIM)
 STUB_EFPGA   := src/sim/efpga_subsystem_stub.sv
 
+# The SRAM models are identical in both IHP PDKs. Once the eFPGA integration lists
+# the sg13g2 copies in FILES_RTL, they are left out: the simulation uses the
+# SG13CMOS5L set (MODELS_SRAM), so each macro is defined once.
+SG13G2_SRAM := $(filter %/sg13g2_sram/verilog/*.v,$(FILES_RTL))
+
 # verilog-axi needs the Verilog-2005 time-0 run of "always @*". With -g2012 the
 # crossbar state stays X after reset. The copies use always_comb.
 SIM_AXI_DIR := $(BUILD)/verilog_axi
@@ -57,7 +62,7 @@ $(SIM_AXI_DIR)/%.v: ../../vendor/verilog-axi/rtl/%.v
 	@mkdir -p $(SIM_AXI_DIR)
 	@sed -E 's/always @ ?(\*|\(\*\))/always_comb/' $< > $@
 
-RTL_SIM := $(filter-out $(RTL_AXI) $(RTL_EFPGA),$(FILES_RTL)) $(RTL_AXI_SIM) $(STUB_EFPGA)
+RTL_SIM := $(filter-out $(RTL_AXI) $(RTL_EFPGA) $(SG13G2_SRAM),$(FILES_RTL)) $(RTL_AXI_SIM) $(STUB_EFPGA)
 
 FILES_RTL_CORE := $(FILES_SIM) $(MODEL_PSRAM) $(RTL_SIM) $(MODELS_SRAM)
 FILES_RTL_PADS := $(FILES_SIM) $(MODEL_PSRAM) $(RTL_SIM) $(RTL_TOP_ASIC) $(MODELS_IO) $(MODELS_SRAM)
@@ -97,7 +102,7 @@ GL_INST_DIR := build/gl_inst
 GL_INST_TOP := $(BUILD)/$(RUN)_diowas_top.v
 GL_INST_NETLISTS := $(foreach i,$(GL_INST),$(GL_INST_DIR)/$(i)_gl.v)
 # RTL that sim_gl_inst.py elaborates (the eFPGA is a black box there)
-GL_INST_RTL := $(wildcard $(filter-out $(RTL_EFPGA),$(FILES_RTL)))
+GL_INST_RTL := $(wildcard $(filter-out $(RTL_EFPGA) $(SG13G2_SRAM),$(FILES_RTL)))
 
 # The netlists use vendor/verilog-axi directly (git status hides its changes).
 # Without verilog-axi.patch the first CPU write hangs (no reset on w_drop_reg).
