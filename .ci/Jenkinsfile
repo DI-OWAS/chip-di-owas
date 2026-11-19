@@ -78,13 +78,13 @@ try {
 	)
 } catch (Throwable t) {
 	// TODO: replace by something that talks to nextcloud chat
-	notifyFailure(mattermostChannel: "#di-owas")
+	//notifyFailure(mattermostChannel: "#di-owas")
 	throw t
 }
 
 if (currentBuild.currentResult != "SUCCESS") {
 	// TODO: replace by something that talks to nextcloud chat
-	notifyFailure(mattermostChannel: "#di-owas")
+	//notifyFailure(mattermostChannel: "#di-owas")
 }
 
 // industry standard :P

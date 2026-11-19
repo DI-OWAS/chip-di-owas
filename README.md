@@ -22,9 +22,7 @@ https://apptainer.org/docs/admin/latest/installation.html
 
 ### Container Image
 
-The latest image is available for download [here](https://openproject.bioai.eu/containers/owas/stable) (e.g., `2025-12-29_1.img`).
-
-If you want to build it yourself, please have a look at the content of [`env/container`](env/container).
+See [container-di-owas](https://github.com/di-owas/container-di-owas).
 
 ## Running the full flow
 
@@ -35,3 +33,10 @@ TERM=xterm OWAS_CONTAINER=$PWD/owas.img make
 ```
 
 Please check the [collection of common problems](doc/CommonProblems.md) in case you encounter any issue upon execution.
+
+# Acknowledgements
+
+The project underlying this repository was funded by the German
+"Bundesministeriums für Forschung, Technologie und Raumfahrt" under grant
+numbers 16ME0963K and 16ME0964. Responsibility for the content of this
+publication lies with the contributors.
