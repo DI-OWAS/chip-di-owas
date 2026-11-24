@@ -21,3 +21,7 @@
 	path = vendor/QSPI_Memory_Controller
 	url = https://github.com/IAmMarcelJung/NSPI_Memory_Controller.git
 	branch = owas_apmemory_verification
+[submodule "vendor/tulip"]
+	path = vendor/tulip
+	url = https://github.com/di-owas/tulip
+	ignore = dirty
