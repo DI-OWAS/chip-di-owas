@@ -26,3 +26,4 @@
 	path = vendor/efpga_subsystem
 	url = https://github.com/DI-OWAS/OWAS_eFPGA_Subsystem.git
 	branch = main
+	shallow = true
