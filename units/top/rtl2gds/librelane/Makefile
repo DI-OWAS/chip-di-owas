@@ -91,3 +91,7 @@ ll_help:
 .PHONY: LibreLane
 
 
+
+ifeq ($(STDCELL_LIB),tulip)
+include $(ROOT_DIR)/vendor/tulip/librelane.mk
+endif
