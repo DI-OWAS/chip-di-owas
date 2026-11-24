@@ -1,0 +1,4 @@
+build/
+*.elf
+!neorv32_bootrom_image.vhd
+

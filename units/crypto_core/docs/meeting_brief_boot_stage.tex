@@ -1,0 +1,158 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.4cm]{geometry}
+\usepackage{enumitem}
+\usepackage{parskip}
+\usepackage{titlesec}
+
+\titleformat{\section}{\large\bfseries}{\thesection.}{0.6em}{}
+\titleformat{\subsection}{\normalsize\bfseries}{\thesubsection}{0.6em}{}
+\setlist[description]{style=nextline, leftmargin=1.2em, itemsep=0.4em}
+\newcommand{\code}[1]{\texttt{#1}}
+
+\title{\vspace{-1.5cm}Crypto Core (RUB) --- Boot-Stage Scoping Brief}
+\author{Benjamin Schulte}
+\date{\today}
+
+\begin{document}
+\maketitle
+\vspace{-0.6cm}
+
+\noindent\textit{Purpose: align on the scope and ownership decisions needed to implement the boot
+stage (secure key provisioning), after which the crypto core is implementable up to chip
+integration. The runtime datapath is complete and verified; the open items are security-scope
+and system-integration choices that the core cannot decide in isolation.}
+
+%==================================================================
+\section{What the core can do today}
+%==================================================================
+
+\begin{description}
+  \item[Interfaces] Two AXI ports, matching the SoC accelerator pattern:
+    a \textbf{REG-IF} (AXI4-Lite \emph{slave}) for the host to configure the core, and a
+    \textbf{DATA-IF} (AXI4 \emph{master}) over which the core autonomously moves data
+    to/from the crossbar (a ``crypto-DMA'').
+  \item[Cipher \& modes] AES-128 in \textbf{CTR mode} (encryption and decryption are the same
+    operation). Two independent key slots with runtime selection (\code{key\_sel}), and a
+    \textbf{bypass} mode for plain data movement (no crypto).
+  \item[Autonomous operation] The host programs source/destination addresses and a block count,
+    sets \code{GO}, and the core streams: read burst $\rightarrow$ AES-CTR $\rightarrow$ write burst,
+    without per-block host involvement.
+  \item[Nonce-uniqueness guarantee] 96-bit host-supplied IV + 32-bit hardware counter that
+    auto-increments per block and cannot be rolled back. A pre-flight gate \textbf{refuses} any
+    transfer that would exceed $2^{32}$ blocks on one IV (which would reuse a nonce) and raises a
+    \code{dma\_error} status bit; the host recovers by writing a fresh IV.
+  \item[Hardening] Keys are never readable over the bus (no AXI read path to key storage);
+    keys are asynchronously zeroized on reset.
+  \item[Verification] Self-checking testbenches all pass: functional (NIST SP800-38A CTR vectors,
+    multi-block, encrypt/decrypt round-trip, bypass copy) and safety (counter-overflow boundary,
+    key isolation, reset-during-operation, no-key refusal), plus unit tests for the register file,
+    FSM, and key store.
+\end{description}
+
+\noindent\textbf{Not yet implemented:} secure key provisioning (keys are currently loaded only via a
+simulation-only mechanism), and any form of \emph{authentication / integrity} --- the core today is
+confidentiality-only.
+
+%==================================================================
+\section{Scope decisions (security level)}
+%==================================================================
+
+\noindent These decide how large the security story is. They should be answered before the boot
+stage is detailed, because they change what hardware we must build.
+
+\begin{description}
+
+  \item[(0) Threat model \& compliance target --- the framing decision.]
+    What are we defending against: untrusted external flash, untrusted host software, a physical
+    attacker (side channels)? Is there a compliance target (FIPS, Common Criteria, internal
+    standard)? Every decision below scales with the answer.
+
+  \item[(1) Do we want authenticated \emph{encryption} on the data path?]
+    Today CTR provides confidentiality only --- tampered ciphertext is undetectable.
+    \emph{If yes} $\rightarrow$ we add \textbf{AES-GCM}, which requires a GF($2^{128}$) multiplier
+    (reuses the existing AES engine).
+    \emph{If no} $\rightarrow$ we stay CTR-only and accept that data integrity is a host/protocol
+    responsibility.
+
+  \item[(2) Do we want an authenticated / signed \emph{bitstream} (firmware integrity)?]
+    \emph{If yes} $\rightarrow$ choose the mechanism:
+    \textbf{symmetric} (CMAC/GMAC with a device key --- cheap if GCM already exists), or
+    \textbf{asymmetric} (a digital signature, e.g.\ ECDSA/RSA --- needs a public-key verifier and a
+    trust anchor, a substantial separate block). Also decide \emph{whose} block this is: the crypto
+    core, or a dedicated secure-boot unit in the SoC.
+    \emph{If no} $\rightarrow$ a tampered bitstream is not detected.
+
+  \item[(3) Do we want authenticated \emph{key wrapping} at boot (tamper-proof keys)?]
+    A plain CTR-unwrap of the keys is malleable: an attacker who can edit the stored blob can flip
+    key bits deterministically.
+    \emph{If yes} $\rightarrow$ authenticated unwrap (AES-GCM or NIST AES Key-Wrap KW/KWP).
+    \emph{If no} $\rightarrow$ confidentiality-only key unwrap, vulnerable to targeted bit-flips.
+
+  \item[(4) Is side-channel resistance in scope?]
+    \emph{If yes} $\rightarrow$ AES masking (our AES core may already expose a security/area
+    parameter worth checking) and DPA-resistant key handling.
+    \emph{If no} $\rightarrow$ no countermeasures, suitable only for a non-physical threat model.
+
+\end{description}
+
+\noindent\textbf{Key dependency:} decisions (1), (2), and (3) all share \textbf{one} building block ---
+an authenticated mode (AES-GCM / GMAC). If any of them is ``yes'', it is most efficient to build GCM
+once and reuse it for the data path, the bitstream MAC, and the key unwrap. This is the single most
+consequential outcome to settle in the meeting.
+
+%==================================================================
+\section{Boot stage: root key, format \& ownership (who does what)}
+%==================================================================
+
+\noindent Assuming the boot stage proceeds, the following must be specified --- several are
+shared between us and the SoC / manufacturing teams.
+
+\begin{description}
+
+  \item[(A) Root key (KEK) --- source and delivery.]
+    Where does the device root key come from: \textbf{eFuse}, \textbf{PUF}, or a tie-off for the
+    test chip? Is it \emph{per-device unique} or shared across a batch (a shared KEK with a fixed
+    boot nonce reuses the same unwrap keystream on every device)? Who provisions it, and at which
+    lifecycle stage? It must reach the core as an \emph{internal hardware input} and never be
+    exposed on the AXI bus.
+
+  \item[(B) Wrapped-key blob --- location and retrieval.]
+    Where is the encrypted key material stored: embedded in the bitstream, in external
+    \textbf{QSPI flash}, or on-chip ROM? How does the core obtain it: \emph{fetch it itself over the
+    DATA-IF} (reusing the AXI master), receive it on \emph{dedicated ports}, or have a \emph{system
+    boot controller} hand it over? Is boot \emph{autonomous at power-on} or orchestrated by an SoC
+    boot sequencer that releases the core?
+
+  \item[(C) Blob / bitstream layout --- format and ownership.]
+    Who owns and writes the format specification? What fields does it carry: header/magic, version,
+    boot nonce/IV, wrapped key\,1, wrapped key\,2, and (if decision~3 is ``yes'') an authentication
+    tag? What word ordering / endianness (to match the conventions already used on the register and
+    AXI interfaces)? Is the key count fixed at two, or variable?
+
+  \item[(D) Boot failure \& lifecycle.]
+    On failure (wrong KEK or failed authentication): zeroize, lock the core, set an error status,
+    halt --- confirm the desired behavior. Is field \emph{re-provisioning / key rotation} required?
+    Is there a \emph{production lifecycle state} that must disable the lab key-load path (secure vs.\
+    open device states)?
+
+\end{description}
+
+%==================================================================
+\section{Integration parameters to finalize}
+%==================================================================
+
+\begin{description}
+  \item[Bus widths] AXI Crossbar data and address width --- these fix the core's
+    \code{AXI\_DATA\_WIDTH} / \code{AXI\_ADDR\_WIDTH} parameters (currently placeholders).
+  \item[Notification] An interrupt line for done/error, or polling only (polling works today).
+  \item[Mapping \& timing] The REG-IF base address in the system memory map; clock/reset domains
+    and target frequency.
+\end{description}
+
+\vspace{0.4cm}
+\noindent\textit{Recommended priority: settle the framing threat model (0) and the authentication
+question (1)--(3) first --- they determine whether GCM is built now --- then the root-key source (A)
+and blob retrieval (B), which unblock the boot-FSM design.}
+
+\end{document}

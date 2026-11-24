@@ -1,0 +1,17 @@
+TOPDIR/src/rtl/dc_packages/design/dc_base_type_pkg.vhd
+TOPDIR/src/rtl/dc_packages/design/dc_constants_pkg.vhd
+TOPDIR/src/rtl/dc_packages/design/dc_cam_if_saxi_pkg.vhd
+TOPDIR/src/rtl/dc_axi_if/design/dc_axi_reader.vhd
+TOPDIR/src/rtl/dc_axi_if/design/dc_axi_writer.vhd
+TOPDIR/src/rtl/dc_axi_if/design/dc_cam_if_rec_saxi.vhd
+TOPDIR/src/rtl/dc_camera_interface/design/dc_camera_interface.vhd
+TOPDIR/src/rtl/dc_cam_if_output_reader/design/dc_cam_if_output_reader.vhd
+TOPDIR/src/rtl/dc_color_interpolator/design/dc_window_mux.vhd
+TOPDIR/src/rtl/dc_color_interpolator/design/dc_camera_matrix.vhd
+TOPDIR/src/rtl/dc_color_interpolator/design/dc_bayer_filter.vhd
+TOPDIR/src/rtl/dc_color_interpolator/design/dc_bayer_interpolator.vhd
+TOPDIR/src/rtl/dc_common/design/dc_cdc_tdp_ram.vhd
+TOPDIR/src/rtl/dc_common/design/dc_fwft_fifo.vhd
+TOPDIR/src/rtl/dc_common/design/dc_sdp_ram.vhd
+TOPDIR/src/rtl/dc_common/design/dc_sync_debounce.vhd
+TOPDIR/src/rtl/dc_cam_if_top.vhd

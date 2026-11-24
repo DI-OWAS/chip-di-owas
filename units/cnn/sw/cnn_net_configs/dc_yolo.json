@@ -1,0 +1,6 @@
+{
+  "network_topology_file": "../../data/yolo/yolov4-tiny.cfg",
+  "weights_file": "../../data/yolo/yolov4-tiny.weights",
+  "image_inputs_dir": "../../data/yolo",
+  "weight_format": "yolo"
+} 

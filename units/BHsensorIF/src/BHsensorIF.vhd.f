@@ -1,0 +1,10 @@
+TOPDIR/src/rtl/BHsensorIF_pkg.vhd
+TOPDIR/src/rtl/BHsensorIF_axi_dma_wr_wrapper.vhd
+TOPDIR/src/rtl/BHsensorIF_axil_slave.vhd
+TOPDIR/src/rtl/BHsensorIF_axi_master.vhd
+TOPDIR/src/rtl/BHsensorIF_channel.vhd
+TOPDIR/src/rtl/BHsensorIF_neorv32_fifo.vhd
+TOPDIR/src/rtl/BHsensorIF_neorv32_package.vhd
+TOPDIR/src/rtl/BHsensorIF_neorv32_uart.vhd
+TOPDIR/src/rtl/BHsensorIF_UartWrapper.vhd
+TOPDIR/src/rtl/BHsensorIF_top.vhd

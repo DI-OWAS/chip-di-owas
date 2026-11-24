@@ -1,0 +1,95 @@
+@Library("jenlib") _
+
+try {
+
+	runOnSlave(label: "frontend") {
+		stage("Checkout") {
+			checkout([
+					$class: 'GitSCM',
+					branches: scm.branches,
+					doGenerateSubmoduleConfigurations: true,
+					extensions: scm.extensions +
+						[[$class: 'SubmoduleOption', parentCredentials: true]] +
+						[[$class: 'CloneOption', depth: 2, noTags: false, reference: '', shallow: true]],
+					userRemoteConfigs: scm.userRemoteConfigs
+			])
+		}
+	}
+
+	parallel(
+			"Chip": {
+				stage("Unit Tests: core_complex") {
+					onSlurmResource(partition: "batch-test", "cpus-per-task": "8") {
+						inSingularity(image: getOWASContainer()) {
+							dir("units/core_complex") {
+								jesh("make check_core")
+				//				// TODO: change to make test?
+				//				jesh("make check_tools")
+				//				// jesh("make check_processor") // FIXME: this was removed
+				//				// jesh("make check_top") // FIXME: this one fails
+				//				jesh("make vhdl_to_verilog")
+							}
+						}
+					}
+				}
+				//stage("Example: FABulous") {
+				//	runOnSlave(label: "frontend") {  // FABulous target needs internet access
+				//		inSingularity(image: getOWASContainer()) {
+				//			jesh("make FABulous")
+				//		}
+				//	}
+				//}
+				stage("LibreLane (top)") {
+					onSlurmResource(partition: "batch-test", "cpus-per-task": "32", mem: "240G") {
+						jesh("OWAS_CONTAINER=${getOWASContainer()} make impl_librelane")
+
+						//inSingularity(image: getOWASContainer()) {
+						//	jesh("klayout rundirs/librelane_top/RUN_*/*-klayout-streamout/diowas_top_pads.klayout.gds -b -r units/top/rtl2gds/librelane/scripts/plot_toplevel.py")
+						//}
+					}
+				}
+				stage("Archive Results") {
+					runOnSlave(label: "frontend") {
+						//archiveArtifacts("rundirs/librelane_top/RUN_*/*-magic-streamout/diowas_top_pads.magic.gds")
+						//archiveArtifacts("rundirs/librelane_top/RUN_*/*-klayout-streamout/diowas_top_pads.klayout.gds")
+						archiveArtifacts("rundirs/librelane_top/RUN_*/*.*")
+						archiveArtifacts("rundirs/librelane_top/RUN_*/*.tar.gz")
+						//archiveArtifacts("toplevel.png")
+					}
+				}
+			},
+			//"Firmware": {
+			//	stage("firmware/hello_world (build and sim)") {
+			//		onSlurmResource(partition: "batch", "cpus-per-task": "32", mem: "240G") {
+			//			dir("units/firmware/hello_world") {
+			//				inSingularity(image: getOWASContainer()) {
+			//					jesh("make all")
+			//					jesh("make sim")
+			//				}
+			//			}
+			//		}
+			//	}
+			//	stage("Archive Results") {
+			//		runOnSlave(label: "frontend") {
+			//			archiveArtifacts("units/firmware/hello_world/main.elf")
+			//		}
+			//	}
+			//},
+	)
+} catch (Throwable t) {
+	// TODO: replace by something that talks to nextcloud chat
+	notifyFailure(mattermostChannel: "#di-owas")
+	throw t
+}
+
+if (currentBuild.currentResult != "SUCCESS") {
+	// TODO: replace by something that talks to nextcloud chat
+	notifyFailure(mattermostChannel: "#di-owas")
+}
+
+// industry standard :P
+String getOWASContainer() {
+	return getDefaultFixturePath(defaultPathCanonical: "/einc/containers/owas/stable/latest",
+	                             commitKey: "In-OWAS-Container",
+	                             parameterName: "OVERWRITE_DEFAULT_OWAS_CONTAINER_IMAGE")
+}

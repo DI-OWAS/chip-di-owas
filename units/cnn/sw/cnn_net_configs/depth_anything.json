@@ -1,0 +1,6 @@
+{
+  "network_topology_file": "../../../data/depth_anything/depthanything-v2-s-196x196.cfg",
+  "weights_file": "../../../data/depth_anything/depthanything-v2-s-196x196.weights",
+  "image_inputs_dir": "../../../data/depth_anything",
+  "weight_format": "depth_anything"
+} 

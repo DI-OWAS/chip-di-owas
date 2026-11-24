@@ -1,0 +1,36 @@
+diff --git a/rtl/axi_crossbar_wr.v b/rtl/axi_crossbar_wr.v
+index 5f55665..85648b4 100644
+--- a/rtl/axi_crossbar_wr.v
++++ b/rtl/axi_crossbar_wr.v
+@@ -328,12 +328,13 @@ generate
+         always @(posedge clk) begin
+             if (rst) begin
+                 w_select_valid_reg <= 1'b0;
++                w_drop_reg <= 1'b0;
++                w_select_valid_reg <= 1'b0;
+             end else begin
+                 w_select_valid_reg <= w_select_valid_next;
++                w_select_reg <= w_select_next;
++                w_drop_reg <= w_drop_next;
+             end
+-
+-            w_select_reg <= w_select_next;
+-            w_drop_reg <= w_drop_next;
+         end
+ 
+         // write data forwarding
+@@ -585,12 +586,12 @@ generate
+             if (rst) begin
+                 w_select_valid_reg <= 1'b0;
+                 w_select_new_reg <= 1'b1;
++                w_select_reg <= {CL_S_COUNT{1'b0}};
+             end else begin
+                 w_select_valid_reg <= w_select_valid_next;
+                 w_select_new_reg <= w_select_new_next;
++                w_select_reg <= w_select_next;
+             end
+-
+-            w_select_reg <= w_select_next;
+         end
+ 
+         // write response forwarding

@@ -1,0 +1,9 @@
+* Empty subcircuit for bondpads (blackbox view for LVS)
+
+.SUBCKT bondpad_70x70
++ PAD
+.ENDS bondpad_70x70
+
+.SUBCKT bondpad_5l_70x70
++ PAD
+.ENDS bondpad_5l_70x70

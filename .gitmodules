@@ -1,0 +1,23 @@
+[submodule "vendor/neorv32"]
+	path = vendor/neorv32
+	url = https://github.com/stnolting/neorv32
+	ignore = dirty
+[submodule "vendor/FABulous"]
+	path = vendor/FABulous
+	url = https://github.com/FPGA-Research-Manchester/FABulous
+	ignore = dirty
+[submodule "vendor/verilog-axi"]
+	path = vendor/verilog-axi
+	url = https://github.com/alexforencich/verilog-axi.git
+	ignore = dirty
+[submodule "vendor/IHP-Open-PDK"]
+	path = vendor/IHP-Open-PDK
+	url = https://github.com/IHP-GmbH/IHP-Open-PDK.git
+	ignore = dirty
+[submodule "vendor/MLFPGA_engine"]
+	path = vendor/MLFPGA_engine
+	url = https://github.com/Asma-Mohsin/MLFPGA_engine.git
+[submodule "vendor/QSPI_Memory_Controller"]
+	path = vendor/QSPI_Memory_Controller
+	url = https://github.com/IAmMarcelJung/NSPI_Memory_Controller.git
+	branch = owas_apmemory_verification
