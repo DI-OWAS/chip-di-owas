@@ -114,7 +114,7 @@ VERILOG_FILES:
 - dir::../../../crypto_core/src/rtl/cryptoDmaCtrl.v
 - dir::../../../crypto_core/src/rtl/keyStorage.v
 - dir::../../../../vendor/QSPI_Memory_Controller/src/OctalMemoryController_quad.v
-- dir::../../../../vendor/QSPI_Memory_Controller/src/AXIInterface.v
+- dir::../../../../vendor/QSPI_Memory_Controller/src/AXI4Subordinate.v
 - dir::../../../../vendor/QSPI_Memory_Controller/src/OSPIController_quad.v
 - dir::../../../../vendor/QSPI_Memory_Controller/src/OctalSPI_quad.v
 - dir::../../../../vendor/verilog-axi/rtl/arbiter.v

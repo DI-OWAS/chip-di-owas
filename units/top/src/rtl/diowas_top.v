@@ -1152,7 +1152,7 @@ module diowas_top (
     .DATA_WIDTH (32),
     .STRB_WIDTH (4),
     .ID_WIDTH   (8),
-    .CHIP_TYPE  (2), // 1 for simulation with Infineon model, 2 for hardware with APMemory
+    .CHIP_TYPE  (2), // must be 2 (APMemory APS12808L)
     .CLK_FREQ_HZ(50_000_000) // clk_i, the PSRAM reset / tCEM timings are derived from it
   ) OctalMemoryController_quad_inst (
     .clk   (clk_i),
