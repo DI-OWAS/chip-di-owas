@@ -18,24 +18,24 @@ module ccmEngine #(
     input  wire                block_valid,
     input  wire                block_last,
     input  wire [4:0]          block_nbytes,
-    output reg                 block_ready,
+    output wire                block_ready,
 
     // ---- output block stream (encrypt: C_i ; decrypt: P_i) ----
     output reg  [127:0]        out_data,
-    output reg                 out_valid,
+    output wire                out_valid,
     output reg  [4:0]          out_nbytes,
     input  wire                out_ready,
 
     // ---- tag / status ----
     output reg  [127:0]        tag_out,      // encrypt: encrypted tag U
-    output reg                 tag_valid,    // encrypt: U is valid
+    output wire                tag_valid,    // encrypt: U is valid
     output reg                 auth_ok,      // decrypt: 1 if tag verified
-    output reg                 busy,
+    output wire                busy,
 
     // ---- AES primitive (same contract as CMAC) ----
     output reg  [127:0]        io_key,
     output reg  [127:0]        io_dataIn,
-    output reg                 fsm_enable,
+    output wire                fsm_enable,
     input  wire [127:0]        io_dataOut,
     input  wire                fsm_ready,
     input  wire                fsm_valid
@@ -145,15 +145,20 @@ always @(posedge clk or posedge rst) begin
 end
 
 
+// Decoded from the state register, not in the combinational block below, so that
+// iverilog does not loop in zero time with the AES fsm_ready/fsm_valid handshake.
+// Same function.
+assign fsm_enable  = (state == FIRST_BLOCK_EN) || (state == TAG_KEYSTREAM_EN) ||
+                     (state == CTR_EN) || (state == MAC_EN);
+assign busy        = (state >= FIRST_BLOCK_EN) && (state <= MAC_WAIT);
+assign block_ready = (state == FEED);
+assign out_valid   = (state == EMIT);
+assign tag_valid   = (state == DONE);
+
 always @(*) begin
     next_state  = state;
-    fsm_enable  = 1'b0;
-    busy        = 1'b0;
-    block_ready = 1'b0;
-    out_valid   = 1'b0;
     out_data    = 128'b0;
     out_nbytes  = 5'b0;
-    tag_valid   = 1'b0;
     io_key      = key;                                      // hold key every cycle
     io_dataIn   = 128'b0;
     tag_out     = mac_state ^ tag_keystream;               // U = T ^ S0  (encrypt)
@@ -169,14 +174,11 @@ always @(*) begin
 
         FIRST_BLOCK_EN : begin
             io_dataIn = first_block; 
-            fsm_enable = 1; 
-            busy = 1;
 
             next_state = FIRST_BLOCK_WAIT;
         end
 
         FIRST_BLOCK_WAIT : begin
-            busy = 1;
 
             if (fsm_valid) begin
                 next_state = TAG_KEYSTREAM_EN;
@@ -185,14 +187,11 @@ always @(*) begin
 
         TAG_KEYSTREAM_EN : begin
             io_dataIn = ctr_block; 
-            fsm_enable = 1; 
-            busy = 1;
             
             next_state = TAG_KEYSTREAM_WAIT; 
         end
 
         TAG_KEYSTREAM_WAIT : begin
-            busy = 1;
 
             if (fsm_valid) begin
                 next_state = (payload_len == 0) ? DONE : FEED;
@@ -200,8 +199,6 @@ always @(*) begin
         end 
 
         FEED : begin
-            busy = 1; 
-            block_ready = 1;
 
             if (block_valid) begin
                 next_state = CTR_EN;
@@ -210,14 +207,11 @@ always @(*) begin
 
         CTR_EN : begin
             io_dataIn = ctr_block; 
-            fsm_enable = 1; 
-            busy = 1;
 
             next_state = CTR_WAIT;
         end
 
         CTR_WAIT : begin
-            busy = 1;
 
             if (fsm_valid) begin
                 next_state = EMIT;
@@ -225,10 +219,8 @@ always @(*) begin
         end
 
         EMIT : begin
-            out_valid = 1; 
             out_data = xor_result; 
             out_nbytes = cur_nbytes; 
-            busy = 1;
 
             if (out_ready) begin
                 next_state = MAC_EN;
@@ -237,14 +229,11 @@ always @(*) begin
 
         MAC_EN : begin
             io_dataIn = mac_input; 
-            fsm_enable = 1;
-            busy = 1;
 
             next_state = MAC_WAIT;
         end
 
         MAC_WAIT : begin
-            busy = 1;
 
             if (fsm_valid) begin
                 next_state = cur_last ? DONE : FEED;
@@ -252,7 +241,6 @@ always @(*) begin
         end
 
         DONE : begin
-            tag_valid = 1;
             next_state = IDLE;
         end    
 
