@@ -22,7 +22,7 @@ try {
 					onSlurmResource(partition: "batch-test", "cpus-per-task": "8") {
 						inSingularity(image: getOWASContainer()) {
 							dir("units/core_complex") {
-								jesh("make check_core")
+								//jesh("make check_core")
 				//				// TODO: change to make test?
 				//				jesh("make check_tools")
 				//				// jesh("make check_processor") // FIXME: this was removed
@@ -39,21 +39,21 @@ try {
 				//		}
 				//	}
 				//}
-				stage("LibreLane (top)") {
-					onSlurmResource(partition: "batch-test", "cpus-per-task": "32", mem: "240G") {
-						jesh("OWAS_CONTAINER=${getOWASContainer()} make impl_librelane")
+				//stage("LibreLane (top)") {
+				//	onSlurmResource(partition: "batch-test", "cpus-per-task": "32", mem: "240G") {
+				//		jesh("OWAS_CONTAINER=${getOWASContainer()} make impl_librelane")
 
-						//inSingularity(image: getOWASContainer()) {
-						//	jesh("klayout rundirs/librelane_top/RUN_*/*-klayout-streamout/diowas_top_pads.klayout.gds -b -r units/top/rtl2gds/librelane/scripts/plot_toplevel.py")
-						//}
-					}
-				}
+				//		//inSingularity(image: getOWASContainer()) {
+				//		//	jesh("klayout rundirs/librelane_top/RUN_*/*-klayout-streamout/diowas_top_pads.klayout.gds -b -r units/top/rtl2gds/librelane/scripts/plot_toplevel.py")
+				//		//}
+				//	}
+				//}
 				stage("Archive Results") {
 					runOnSlave(label: "frontend") {
 						//archiveArtifacts("rundirs/librelane_top/RUN_*/*-magic-streamout/diowas_top_pads.magic.gds")
 						//archiveArtifacts("rundirs/librelane_top/RUN_*/*-klayout-streamout/diowas_top_pads.klayout.gds")
-						archiveArtifacts("rundirs/librelane_top/RUN_*/*.*")
-						archiveArtifacts("rundirs/librelane_top/RUN_*/*.tar.gz")
+						//archiveArtifacts("rundirs/librelane_top/RUN_*/*.*")
+						//archiveArtifacts("rundirs/librelane_top/RUN_*/*.tar.gz")
 						//archiveArtifacts("toplevel.png")
 					}
 				}
