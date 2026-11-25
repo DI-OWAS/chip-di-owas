@@ -48,6 +48,15 @@ try {
 						//}
 					}
 				}
+				stage("Patch (top)") {
+					onSlurmResource(partition: "batch-test", "cpus-per-task": "2", mem: "4G") {
+						inSingularity(image: getOWASContainer()) {
+							dir("units/top") {
+								jesh("make patch")
+							}
+						}
+					}
+				}
 				stage("Archive Results") {
 					runOnSlave(label: "frontend") {
 						//archiveArtifacts("rundirs/librelane_top/RUN_*/*-magic-streamout/diowas_top_pads.magic.gds")
