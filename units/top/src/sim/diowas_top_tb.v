@@ -170,8 +170,8 @@ module diowas_top_tb;
     .spiram_sdo_o_PAD       (spiram_sdo),
     // DCV Camera Interface
     .cam_pixel_clk_i_PAD    (pixel_clock),
-    .cam_frame_valid_i_PA   (line_valid),
-    .cam_line_valid_i_PAD   (frame_valid),
+    .cam_frame_valid_i_PAD  (frame_valid),
+    .cam_line_valid_i_PAD   (line_valid),
     .cam_pixel_data_i_PAD   (pixel_data),
     .cam_doutif_data_o_PAD  (),
     .cam_doutif_valid_o_PAD (),
