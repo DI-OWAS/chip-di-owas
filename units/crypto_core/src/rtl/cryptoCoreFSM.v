@@ -26,14 +26,14 @@ module cryptoCoreFSM (
 
 
     //outputs from axi4LiteRegs module
-    output reg              status_busy,
-    output reg              status_done,
+    output wire             status_busy,
+    output wire             status_done,
     output reg [127:0]      cipher_out,
 
     //outputs to AES engine
     output reg [127:0]      io_key,
     output reg [127:0]      io_dataIn,
-    output reg              fsm_enable,
+    output wire             fsm_enable,
 
     //output to keyStorage
     output reg              key_sel,
@@ -76,6 +76,13 @@ always @(posedge clk or posedge rst) begin
 end
 
 
+// Decoded from the state register, not in the combinational block below, so that
+// iverilog does not loop in zero time with the AES fsm_ready/fsm_valid handshake.
+// Same function.
+assign fsm_enable  = (state == RUNTIME_ENABLE);
+assign status_busy = (state == RUNTIME_ENABLE) || (state == RUNTIME_WAIT);
+assign status_done = (state == RUNTIME_DONE);
+
 // Sequential Block
 always @(posedge clk or posedge rst) begin
     if (rst)    state <= RUNTIME_IDLE; 
@@ -86,9 +93,6 @@ end
 //Combinational Block
 always @(*) begin
     next_state    = state;   // default: stay in current state
-    status_busy   = 1'b0;
-    status_done   = 1'b0;
-    fsm_enable    = 1'b0;
     key_sel       = ctrl_key_sel;  // always mirrors the control bit
     io_key        = boot_active ? boot_kek : key_out;       // if boot_active use boot_kek, else use selected key
     io_dataIn     = ctr_nonce;     // always feed the counter block
@@ -116,13 +120,10 @@ always @(*) begin
         end
 
         RUNTIME_ENABLE: begin
-            fsm_enable = 1'b1;
-            status_busy = 1'b1;
             next_state = RUNTIME_WAIT;
         end
 
         RUNTIME_WAIT: begin
-            status_busy = 1'b1;
 
             if (fsm_valid) begin
                 next_state = RUNTIME_DONE;
@@ -130,7 +131,6 @@ always @(*) begin
         end
 
         RUNTIME_DONE: begin
-            status_done = 1'b1;
             next_state = RUNTIME_IDLE;
             ctr_count_inc = 1'b1;
         end
