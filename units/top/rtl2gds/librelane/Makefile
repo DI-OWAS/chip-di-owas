@@ -35,15 +35,12 @@ TO_DIR   := $(shell find $(LATEST_RUNS_DIR) -maxdepth 1 -type d -name *$(shell e
 LL_CMD := PYTHONPATH=$(MAKEFILE_DIR)/scripts:$$PYTHONPATH librelane
 
 
-all: vhdl_to_verilog unzip_macro ll_synth_only
+all: vhdl_to_verilog ll_synth_only
 
-full_impl: vhdl_to_verilog unzip_macro LibreLane
+full_impl: vhdl_to_verilog LibreLane
 
 vhdl_to_verilog:
 	apptainer exec --writable-tmpfs -H $(ROOT_DIR) -B $(ROOT_DIR) --no-mount /etc/apptainer --no-mount /etc/apptainer/apptainer.conf $(OWAS_CONTAINER) bash -c "make -C $(ROOT_DIR)/units/top vhdl_to_verilog -B" ;
-
-unzip_macro:
-	find $(ROOT_DIR)/vendor/MLFPGA_engine/final -type f -iname "*.zip" -execdir gunzip -f -k -S .zip {} \;
 
 LibreLane:
 	apptainer exec --writable-tmpfs -H $(ROOT_DIR) -B $(ROOT_DIR) --no-mount /etc/apptainer --no-mount /etc/apptainer/apptainer.conf $(OWAS_CONTAINER) bash -c '$(LL_CMD) \
