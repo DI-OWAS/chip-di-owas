@@ -179,7 +179,9 @@ info:
 
 patch:
 	@echo "Patching submodules..."
-	git -C ../../vendor/verilog-axi apply verilog-axi.patch
+	@git -C ../../vendor/verilog-axi apply --reverse --check $(CURDIR)/verilog-axi.patch 2>/dev/null || \
+		git -C ../../vendor/verilog-axi apply $(CURDIR)/verilog-axi.patch
+	@touch patch
 
 clean: fpga_clean
 	make -C ../core_complex clean
