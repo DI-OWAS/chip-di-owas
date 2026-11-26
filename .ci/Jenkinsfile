@@ -57,11 +57,18 @@ try {
 						}
 					}
 				}
+				stage("LibreLane (top, Tulip libs)") {
+					onSlurmResource(partition: "batch-test", "cpus-per-task": "32", mem: "240G") {
+						// same as LibreLane (top), with the Tulip std-cell libs (vendor/tulip/librelane.mk)
+						jesh("OWAS_CONTAINER=${getOWASContainer()} make -C units/top/rtl2gds/librelane ll_synth_only STDCELL_LIB=tulip")
+					}
+				}
 				stage("Archive Results") {
 					runOnSlave(label: "frontend") {
 						//archiveArtifacts("rundirs/librelane_top/RUN_*/*-magic-streamout/diowas_top_pads.magic.gds")
 						//archiveArtifacts("rundirs/librelane_top/RUN_*/*-klayout-streamout/diowas_top_pads.klayout.gds")
 						archiveArtifacts("rundirs/librelane_top/RUN_*/*.*")
+						archiveArtifacts("rundirs/librelane_top_tulip/RUN_*/*.*")
 						archiveArtifacts("rundirs/librelane_top/RUN_*/*.tar.gz")
 						//archiveArtifacts("toplevel.png")
 					}
