@@ -9,15 +9,15 @@ module cmacEngine (
     input  wire         block_valid,  // block_in is presented
     input  wire         block_last,   // this is the final block of the message
     input  wire [4:0]   block_nbytes, // valid bytes in the FINAL block, 0..16 (16=full)
-    output reg          block_ready,  // engine will consume a block this cycle
+    output wire         block_ready,  // engine will consume a block this cycle
     output reg  [127:0] tag,          // CMAC result
-    output reg          tag_valid,    // 1 when tag is valid (message complete)
-    output reg          busy,
+    output wire         tag_valid,    // 1 when tag is valid (message complete)
+    output wire         busy,
 
     // ---- AES primitive interface (drive + consume) ----
     output reg  [127:0] io_key,
     output reg  [127:0] io_dataIn,
-    output reg          fsm_enable,
+    output wire         fsm_enable,
     input  wire [127:0] io_dataOut,
     input  wire         fsm_ready,
     input  wire         fsm_valid
@@ -120,12 +120,17 @@ always @(*) begin
 end
 
 
+// Decoded from the state register, not in the combinational block below, so that
+// iverilog does not loop in zero time with the AES fsm_ready/fsm_valid handshake.
+// Same function.
+assign fsm_enable  = (state == SUBKEY_EN) || ((state == ABSORB_EN) && block_valid);
+assign block_ready = (state == ABSORB_EN);
+assign busy        = (state == SUBKEY_EN) || (state == SUBKEY_WAIT) ||
+                     (state == ABSORB_EN) || (state == ABSORB_WAIT);
+assign tag_valid   = (state == DONE);
+
 always @(*) begin
     next_state  = state;
-    fsm_enable  = 1'b0;
-    block_ready = 1'b0;
-    busy        = 1'b0;
-    tag_valid   = 1'b0;
     io_key      = key;              // hold the key across the whole op
     io_dataIn   = 128'd0;           // overridden per-state below
     tag = chaining_reg;
@@ -140,30 +145,23 @@ always @(*) begin
 
         SUBKEY_EN : begin
             io_dataIn = 0;
-            fsm_enable = 1;
-            busy = 1;
             next_state = SUBKEY_WAIT;
         end
 
         SUBKEY_WAIT : begin
-            busy=1;
             if (fsm_valid) begin
                 next_state = ABSORB_EN;
             end
         end
 
         ABSORB_EN : begin
-            busy = 1;
-            block_ready = 1;
             if (block_valid) begin
                 io_dataIn = chaining_reg ^ blk_present;
-                fsm_enable = 1;
                 next_state = ABSORB_WAIT;
             end
         end
 
         ABSORB_WAIT : begin
-            busy = 1;
             if (fsm_valid) begin
                 if (last_r) begin
                     next_state = DONE;
@@ -174,7 +172,6 @@ always @(*) begin
         end 
 
         DONE : begin
-            tag_valid = 1;
             next_state = IDLE;
         end    
     endcase
