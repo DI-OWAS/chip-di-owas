@@ -1,5 +1,5 @@
 diff --git a/rtl/axi_crossbar_wr.v b/rtl/axi_crossbar_wr.v
-index 5f55665..85648b4 100644
+index 5f55665..10d5e5b 100644
 --- a/rtl/axi_crossbar_wr.v
 +++ b/rtl/axi_crossbar_wr.v
 @@ -328,12 +328,13 @@ generate
@@ -7,7 +7,7 @@ index 5f55665..85648b4 100644
              if (rst) begin
                  w_select_valid_reg <= 1'b0;
 +                w_drop_reg <= 1'b0;
-+                w_select_valid_reg <= 1'b0;
++                w_select_reg <= {CL_M_COUNT{1'b0}};
              end else begin
                  w_select_valid_reg <= w_select_valid_next;
 +                w_select_reg <= w_select_next;

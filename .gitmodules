@@ -19,8 +19,8 @@
 	url = https://github.com/Asma-Mohsin/MLFPGA_engine.git
 [submodule "vendor/QSPI_Memory_Controller"]
 	path = vendor/QSPI_Memory_Controller
-	url = https://github.com/IAmMarcelJung/NSPI_Memory_Controller.git
-	branch = owas_apmemory_verification
+	url = https://github.com/IAmMarcelJung/quad-octal-psram-controller.git
+	branch = main
 [submodule "vendor/tulip"]
 	path = vendor/tulip
 	url = https://github.com/di-owas/tulip
